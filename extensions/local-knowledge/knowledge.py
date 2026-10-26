@@ -174,7 +174,7 @@ class Knowledge:
         return sorted(found)
 
     def fingerprint(self):
-        return f"v2:1400:200:{self.model}:{self.embedder.digest(self.model)}"
+        return f"v1:1400:200:{self.model}:{self.embedder.digest(self.model)}"
 
     def refresh(self):
         report = {"indexed": 0, "unchanged": 0, "removed": 0, "skipped": []}
