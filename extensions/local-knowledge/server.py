@@ -1,6 +1,10 @@
 import argparse
 import json
 from pathlib import Path
+import sys
+
+# Python must not add unsealed bytecode files inside a signed desktop bundle.
+sys.dont_write_bytecode = True
 
 from mcp.server.fastmcp import FastMCP
 
