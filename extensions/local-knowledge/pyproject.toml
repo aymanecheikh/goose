@@ -1,0 +1,6 @@
+[project]
+name = "goose-local-knowledge"
+version = "0.1.0"
+description = "On-disk local knowledge search for Goose, backed by EmbeddingGemma"
+requires-python = ">=3.11"
+dependencies = ["mcp==1.30.0", "pypdf>=6,<7"]

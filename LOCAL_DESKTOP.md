@@ -16,9 +16,44 @@ as the `upstream` remote.
 - App updates are maintained through this fork; the official Goose updater is
   disabled for the custom app.
 
-EmbeddingGemma remains installed in Ollama for future semantic-search and
-retrieval integration. It is an embedding model and is not a chat-menu choice.
-No semantic index or automatic model-quality router is configured yet.
+EmbeddingGemma powers the **Local Knowledge** extension shared by both chat
+models. It is an embedding model and is not a chat-menu choice. Automatic
+model-quality routing is not configured.
+
+## Local knowledge search
+
+Save notes and documents under `~/AIWorkspace/` (for example, its `Knowledge/`
+folder). Ask Goose to **refresh the local knowledge index**, then ask a question
+about those files. `knowledge_index`, `knowledge_search`, and `knowledge_status`
+are available to either Qwen or Gemma. Search returns short passages with source
+paths and line numbers in extracted text. Documents are reference material,
+not instructions to the agent. This is document retrieval, not automatic chat
+history storage.
+
+The folder list is in `~/.local/share/goose-local/config/knowledge.json`.
+The SQLite index and a 100-query embedding cache live under
+`~/.local/share/goose-local/data/knowledge/`. Documents and embeddings stay
+local; inference uses only Ollama's loopback endpoint.
+
+Indexing is incremental and runs on request, with no background watcher.
+Deleted or changed documents are excluded from search until refreshed. Text,
+Markdown, CSV, JSON, common code files, PDF text, and DOCX are supported; scanned
+PDFs need OCR first. Hidden files, symlinks, build/dependency directories, files
+over 2 MiB, and PDFs over 80 pages are skipped. The bounded index holds at most
+1,000 files and 10,000 chunks. Embedding batches contain at most eight small
+chunks, and vectors are streamed from SQLite during search.
+
+EmbeddingGemma is explicitly unloaded after indexing or an uncached search.
+The existing one-model limit still applies, so an uncached search may unload
+the chat model and require reloading it to answer. Repeated identical queries
+reuse cached query vectors. This favors low memory use over minimum latency.
+
+The extension source and locked Python dependencies are in
+`extensions/local-knowledge/`. The desktop build installs its runtime into
+`~/.local/share/goose-tools/knowledge-venv/`, installs the active server source in
+`~/.local/share/goose-tools/knowledge-server/`, and bundles a source copy.
+The separate server can be updated without replacing the desktop executable;
+start a new chat to load a new server version.
 
 ## Build and run
 

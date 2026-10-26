@@ -21,6 +21,7 @@ activities:
   - Validate ACP thinking-effort discovery, forwarding, and provider switching
   - Validate GDK observability hook lifecycle events and payload opt-in
   - Validate capped and uncapped auto-compaction thresholds and Desktop editing
+  - Validate local EmbeddingGemma knowledge retrieval when Local Knowledge is configured
   - Test error boundaries including nested delegation prevention
   - Generate comprehensive test report
 
@@ -29,7 +30,7 @@ parameters:
     input_type: string
     requirement: optional
     default: "all"
-    description: "Which test phases to run: all, basic, extensions, delegation, code-mode, declared-vision, reasoning, zai-coding-plan, acp-effort, compaction, advanced"
+    description: "Which test phases to run: all, basic, extensions, delegation, code-mode, declared-vision, reasoning, zai-coding-plan, acp-effort, compaction, advanced, local-knowledge"
 
   - key: test_depth
     input_type: string
@@ -148,6 +149,17 @@ extensions:
     name: skills
 
 prompt: |
+  {% if test_phases == "local-knowledge" %}
+  Test only the Local Knowledge extension already configured in this profile.
+  Do not delegate, open browsers, or use desktop control. Do not run other phases.
+  1. Call knowledge_status and report indexed file/chunk counts.
+  2. Call knowledge_search with the query "local model comparison benchmark elapsed times default".
+  3. From retrieved passages only, report both model names, their measured total
+     elapsed times, and the recommended default. Cite the provided source span
+     or explicit L-numbered lines exactly; do not guess line numbers.
+  4. End with PASS only if the status and search tools succeeded and the passage
+     actually supports the answer. Do not inspect files through other tools.
+  {% else %}
   Execute the Goose Self-Testing Integration Suite in {{ workspace_dir }}.
   Test phases: {{ test_phases }}, Depth: {{ test_depth }}, Parallel: {{ parallel_tests }}
 
@@ -611,3 +623,4 @@ prompt: |
   Be thorough but efficient based on the test_depth parameter.
 
   This is true first-person integration testing. Execute with precision and document with clarity.
+  {% endif %}

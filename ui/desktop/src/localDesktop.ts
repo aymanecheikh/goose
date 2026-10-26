@@ -1,6 +1,7 @@
 import { app } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
+import * as yaml from 'yaml';
 import { DEFAULT_LOCAL_MODEL, LOCAL_CHAT_MODELS, LOCAL_CONTEXT_LIMIT } from './localModels';
 
 const home = app.getPath('home');
@@ -127,4 +128,39 @@ if (!fs.existsSync(settingsFile)) {
 const recentDirs = path.join(userData, 'recent-dirs.json');
 if (!fs.existsSync(recentDirs)) {
   fs.writeFileSync(recentDirs, JSON.stringify({ dirs: [workspace] }), { mode: 0o600 });
+}
+
+const knowledgeConfig = path.join(root, 'config', 'knowledge.json');
+if (!fs.existsSync(knowledgeConfig)) {
+  fs.writeFileSync(
+    knowledgeConfig,
+    JSON.stringify(
+      {
+        roots: [workspace],
+        database: path.join(root, 'data', 'knowledge', 'index.sqlite3'),
+        model: 'embeddinggemma:latest',
+      },
+      null,
+      2
+    ),
+    { mode: 0o600 }
+  );
+}
+const profile = yaml.parseDocument(fs.readFileSync(configFile, 'utf8'));
+if (!profile.hasIn(['extensions', 'localknowledge'])) {
+  const source = path.join(home, '.local/share/goose-tools/knowledge-server');
+  profile.setIn(['extensions', 'localknowledge'], {
+    type: 'stdio',
+    name: 'localknowledge',
+    display_name: 'Local Knowledge',
+    description: 'Search local notes and documents with EmbeddingGemma',
+    enabled: true,
+    cmd: path.join(home, '.local/share/goose-tools/knowledge-venv/bin/python'),
+    args: [path.join(source, 'server.py'), '--config', knowledgeConfig],
+    envs: { PYTHONDONTWRITEBYTECODE: '1' },
+    timeout: 600,
+  });
+  const temporary = `${configFile}.knowledge-tmp`;
+  fs.writeFileSync(temporary, profile.toString(), { mode: 0o600 });
+  fs.renameSync(temporary, configFile);
 }

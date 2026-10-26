@@ -7,7 +7,12 @@ const isLinuxVulkanBuild = process.env.GOOSE_DESKTOP_LINUX_VARIANT === 'vulkan';
 let cfg = {
   appBundleId: 'io.github.aymanecheikh.goose.local',
   asar: true,
-  extraResource: ['src/bin', 'src/images', 'src/app-update.yml'],
+  extraResource: [
+    'src/bin',
+    'src/images',
+    'src/app-update.yml',
+    '../../extensions/local-knowledge',
+  ],
   icon: 'src/images/icon',
   // Windows specific configuration
   win32: {

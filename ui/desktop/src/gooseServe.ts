@@ -139,15 +139,15 @@ const TLS_FINGERPRINT_TIMEOUT_MS = 5000;
 const fetchStatus = async (
   statusUrl: string,
   readinessFetch: ReadinessFetch
-): Promise<boolean> => {
+): Promise<{ ready: boolean; error?: string }> => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 1000);
 
   try {
     const response = await readinessFetch(statusUrl, { signal: controller.signal });
-    return response.ok;
-  } catch {
-    return false;
+    return { ready: response.ok, error: response.ok ? undefined : `HTTP ${response.status}` };
+  } catch (error) {
+    return { ready: false, error: error instanceof Error ? error.message : String(error) };
   } finally {
     clearTimeout(timeout);
   }
@@ -199,6 +199,7 @@ const waitForGooseServeReady = async (
   });
 
   let attempt = 1;
+  let lastProbeError: string | undefined;
   while (Date.now() < deadline) {
     if (shouldStopWaiting()) {
       options.onEvent?.('healthcheck_fatal_error', {
@@ -218,12 +219,22 @@ const waitForGooseServeReady = async (
       return false;
     }
 
-    if (await fetchStatus(statusUrl, options.readinessFetch)) {
+    const probe = await fetchStatus(statusUrl, options.readinessFetch);
+    if (probe.ready) {
       options.onEvent?.('healthcheck_success', {
         ...probeDetails,
         attempt,
       });
       return true;
+    }
+
+    if (probe.error !== lastProbeError) {
+      lastProbeError = probe.error;
+      options.onEvent?.('healthcheck_probe_error', {
+        ...probeDetails,
+        attempt,
+        error: probe.error,
+      });
     }
 
     await delay(interval);
