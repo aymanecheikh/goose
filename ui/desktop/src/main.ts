@@ -1,3 +1,4 @@
+import './localDesktop';
 import type { IpcMainInvokeEvent, OpenDialogOptions, OpenDialogReturnValue } from 'electron';
 import {
   app,
@@ -779,7 +780,7 @@ async function handleFileOpen(filePath: string) {
 
     // Show user-friendly error notification
     new Notification({
-      title: 'Goose',
+      title: 'Goose Local',
       body: `Could not open directory: ${path.basename(filePath)}`,
     }).show();
   }

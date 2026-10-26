@@ -1,0 +1,36 @@
+{
+  "hardware": "Mac mini M4, 16 GiB unified memory",
+  "ollama_version": "0.35.1",
+  "goose_engine_version": "1.56.0",
+  "context_tokens": 16384,
+  "thinking": "off",
+  "max_output_tokens": 2048,
+  "sampling_temperature": 0.2,
+  "runs_per_task_per_model": 1,
+  "tasks": [
+    "expense_analysis",
+    "document_creation",
+    "code_repair",
+    "web_research"
+  ],
+  "results": {
+    "qwen3.5:9b-q4_K_M": {
+      "passed": 4,
+      "tasks": 4,
+      "elapsed_seconds": 235.4
+    },
+    "gemma4:12b-it-q4_K_M": {
+      "passed": 4,
+      "tasks": 4,
+      "elapsed_seconds": 310.9
+    }
+  },
+  "selected_default": "qwen3.5:9b-q4_K_M",
+  "selection_reason": "Both passed all four checked tasks. Qwen was faster on every task and approximately 24 percent faster overall.",
+  "limitations": [
+    "One cold-start-inclusive run per task; timings include tool startup and web latency.",
+    "Ollama API memory figures for Gemma were inconsistent with the much larger primary weight buffers in loader logs and are not treated as total resident memory.",
+    "These four tasks do not establish universal model quality."
+  ],
+  "max_loaded_models_observed": 1
+}

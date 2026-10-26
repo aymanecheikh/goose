@@ -21,6 +21,7 @@ import type { Message } from '../../../../types/message';
 import type { RecentModel } from '../../../../utils/settings';
 import { addToRecentModels } from '../../../../utils/recentModels';
 import { trackModelChanged } from '../../../../utils/analytics';
+import { LOCAL_CHAT_MODELS } from '../../../../localModels';
 
 const i18n = defineMessages({
   selectModel: {
@@ -114,7 +115,10 @@ export default function ModelsBottomBar({
   // Show a visible loading placeholder while session metadata is still being fetched,
   // rather than flashing the config default or leaving the footer blank.
   const isModelLoading = Boolean(sessionId && !sessionLoaded);
-  const displayModel = currentModel || providerDefaultModel || displayModelName;
+  const localLabel = LOCAL_CHAT_MODELS.find(
+    (model) => model.provider === currentProvider && model.model === currentModel
+  )?.label;
+  const displayModel = localLabel || currentModel || providerDefaultModel || displayModelName;
   const resolvedModel = latestInference?.resolvedModel ?? null;
   const shouldShowResolvedModel = Boolean(
     !isModelLoading &&
@@ -216,7 +220,9 @@ export default function ModelsBottomBar({
   };
 
   const filteredRecentModels = recentModels.filter(
-    (r) => !(r.model === currentModel && r.provider === currentProvider)
+    (r) =>
+      !(r.model === currentModel && r.provider === currentProvider) &&
+      !LOCAL_CHAT_MODELS.some((model) => model.model === r.model && model.provider === r.provider)
   );
 
   return (
@@ -261,6 +267,22 @@ export default function ModelsBottomBar({
               </p>
             </div>
           )}
+          <h6 className="text-xs text-text-primary mt-2 ml-2">Local models</h6>
+          {LOCAL_CHAT_MODELS.map((model) => (
+            <DropdownMenuItem
+              key={model.model}
+              disabled={model.model === currentModel && model.provider === currentProvider}
+              onSelect={() => void handleRecentModelClick(model)}
+            >
+              <span>{model.label} — Ollama</span>
+              {model.model === currentModel && model.provider === currentProvider && (
+                <span className="ml-auto" aria-label="Selected">
+                  ✓
+                </span>
+              )}
+            </DropdownMenuItem>
+          ))}
+          <DropdownMenuSeparator />
           {filteredRecentModels.length > 0 && (
             <>
               <h6 className="text-xs text-text-primary mt-2 ml-2">

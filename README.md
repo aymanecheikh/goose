@@ -2,6 +2,11 @@
 
 # goose
 
+This fork contains **Goose Local**, a desktop build for local Ollama models,
+direct Qwen/Gemma switching, and conservative memory use. See
+[LOCAL_DESKTOP.md](LOCAL_DESKTOP.md) for build instructions and the model
+comparison. The upstream Goose documentation continues below.
+
 _your native open source AI agent — desktop app, CLI, and API — for code, workflows, and everything in between_
 
 <p align="center">

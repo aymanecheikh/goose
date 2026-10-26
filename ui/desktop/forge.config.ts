@@ -5,6 +5,7 @@ const { resolve } = require('path');
 const isLinuxVulkanBuild = process.env.GOOSE_DESKTOP_LINUX_VARIANT === 'vulkan';
 
 let cfg = {
+  appBundleId: 'io.github.aymanecheikh.goose.local',
   asar: true,
   extraResource: ['src/bin', 'src/images', 'src/app-update.yml'],
   icon: 'src/images/icon',
@@ -35,8 +36,7 @@ let cfg = {
       },
     ],
     // Usage descriptions for macOS TCC (Transparency, Consent, and Control)
-    NSMicrophoneUsageDescription:
-      'Goose needs access to your microphone for voice dictation.',
+    NSMicrophoneUsageDescription: 'Goose needs access to your microphone for voice dictation.',
     NSAppleEventsUsageDescription:
       'Goose needs access to send Apple Events to control other apps on your behalf.',
   },
@@ -65,7 +65,7 @@ module.exports = {
       name: '@electron-forge/publisher-github',
       config: {
         repository: {
-          owner: process.env.GITHUB_OWNER || 'aaif-goose',
+          owner: process.env.GITHUB_OWNER || 'aymanecheikh',
           name: process.env.GITHUB_REPO || 'goose',
         },
         prerelease: false,

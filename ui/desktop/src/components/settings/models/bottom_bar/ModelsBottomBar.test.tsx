@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fireEvent, render, type RenderOptions, screen } from '@testing-library/react';
+import { fireEvent, render, type RenderOptions, screen, waitFor } from '@testing-library/react';
 import ModelsBottomBar from './ModelsBottomBar';
 import { IntlTestWrapper } from '../../../../i18n/test-utils';
 
@@ -14,11 +14,13 @@ let mockCurrentProvider: string | null = 'config-provider';
 const mockGetProviders = vi.fn();
 const mockOnModelChanged = vi.fn();
 const mockPreventCloseAutoFocus = vi.fn();
+const mockChangeModel = vi.fn();
 
 vi.mock('../../../ModelAndProviderContext', () => ({
   useModelAndProvider: () => ({
     currentModel: mockCurrentModel,
     currentProvider: mockCurrentProvider,
+    changeModel: mockChangeModel,
   }),
 }));
 
@@ -26,6 +28,10 @@ vi.mock('../../../ConfigContext', () => ({
   useConfig: () => ({
     getProviders: mockGetProviders,
   }),
+}));
+
+vi.mock('../../../../acp/providers', () => ({
+  acpReadThinkingEffort: vi.fn().mockResolvedValue('off'),
 }));
 
 vi.mock('../modelInterface', () => ({
@@ -74,10 +80,16 @@ vi.mock('../../../ui/dropdown-menu', () => ({
   DropdownMenuItem: ({
     children,
     onSelect,
+    disabled,
   }: {
     children: React.ReactNode;
     onSelect?: () => void;
-  }) => <button onClick={onSelect}>{children}</button>,
+    disabled?: boolean;
+  }) => (
+    <button disabled={disabled} onClick={onSelect}>
+      {children}
+    </button>
+  ),
   DropdownMenuSeparator: () => null,
 }));
 
@@ -99,6 +111,48 @@ describe('ModelsBottomBar', () => {
     mockCurrentModel = 'config-model';
     mockCurrentProvider = 'config-provider';
     mockGetProviders.mockResolvedValue([]);
+    mockChangeModel.mockResolvedValue(true);
+  });
+
+  it('switches directly from Qwen to Gemma through the local model menu', async () => {
+    mockCurrentProvider = 'ollama';
+    mockCurrentModel = 'qwen3.5:9b-q4_K_M';
+    renderWithIntl(
+      <ModelsBottomBar
+        sessionId={null}
+        dropdownRef={createDropdownRef()}
+        setView={vi.fn()}
+        onModelChanged={mockOnModelChanged}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Gemma 12B — Ollama' }));
+    await waitFor(() =>
+      expect(mockChangeModel).toHaveBeenCalledWith(null, {
+        name: 'gemma4:12b-it-q4_K_M',
+        provider: 'ollama',
+      })
+    );
+    await waitFor(() =>
+      expect(mockOnModelChanged).toHaveBeenCalledWith({
+        model: 'gemma4:12b-it-q4_K_M',
+        provider: 'ollama',
+      })
+    );
+  });
+
+  it('marks the selected chat model and keeps embeddings out of the chat choices', () => {
+    mockCurrentProvider = 'ollama';
+    mockCurrentModel = 'qwen3.5:9b-q4_K_M';
+    renderWithIntl(
+      <ModelsBottomBar
+        sessionId={null}
+        dropdownRef={createDropdownRef()}
+        setView={vi.fn()}
+        onModelChanged={mockOnModelChanged}
+      />
+    );
+    expect(screen.getByRole('button', { name: /Qwen 9B — Ollama/ })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /EmbeddingGemma/i })).not.toBeInTheDocument();
   });
 
   it('shows a loading placeholder while the active session model is still loading', async () => {
